@@ -1,96 +1,97 @@
 import streamlit as st
 import pandas as pd
 
-# הגדרות דף לשיפור ה-UI
-st.set_page_config(
-    page_title="GreenLayer | עוזר הגינון האישי שלך",
-    page_icon="🌿",
-    layout="wide"
-)
+st.set_page_config(page_title="GreenLayer Pro", page_icon="🌿", layout="wide")
 
-# עיצוב CSS מותאם אישית להצגת כרטיסיות (UX/UI)
+# עיצוב UI מתקדם
 st.markdown("""
     <style>
-    .main {
-        background-color: #f5f7f5;
-    }
-    .stCard {
+    .plant-card {
         background-color: white;
         padding: 20px;
         border-radius: 15px;
-        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-        margin-bottom: 20px;
-        border-right: 5px solid #2e7d32;
+        border-right: 6px solid #4CAF50;
+        box-shadow: 2px 2px 10px rgba(0,0,0,0.05);
     }
-    h1 {
+    .badge {
+        background-color: #e8f5e9;
         color: #2e7d32;
-        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: bold;
     }
     </style>
     """, unsafe_allow_html=True)
 
-# ---------- בסיס נתונים מורחב (סקר שוק צמחים נפוצים) ----------
+# בסיס נתונים מורחב עם מאפיינים נוספים
 data = [
-    {"צמח": "לבנדר", "שמש": "שמש מלאה", "השקיה": "נמוכה", "אזור": "כל הארץ", "תיאור": "צמח ריחני, דוחה מזיקים ומושך דבורים.", "תמונה": "https://images.unsplash.com/photo-1591073113125-e46713c829ed?w=400"},
-    {"צמח": "מונסטרה (דליסיוסה)", "שמש": "צל מלא", "השקיה": "בינונית", "אזור": "מרכז", "תיאור": "צמח בית מרשים עם עלים מחוררים.", "תמונה": "https://images.unsplash.com/photo-1614594975525-e45190c55d0b?w=400"},
-    {"צמח": "רוזמרין", "שמש": "שמש מלאה", "השקיה": "נמוכה", "אזור": "כל הארץ", "תיאור": "חזק מאוד, מתאים לבישול ולגדר חיה.", "תמונה": "https://images.unsplash.com/photo-1594313054110-5004f5296377?w=400"},
-    {"צמח": "ציפור גן עדן", "שמש": "שמש מלאה", "השקיה": "בינונית", "אזור": "דרום", "תיאור": "פריחה כתומה מרהיבה ומראה טרופי.", "תמונה": "https://images.unsplash.com/photo-1603436326446-747293021160?w=400"},
-    {"צמח": "סנסיביריה (לשון החותנת)", "שמש": "צל מלא", "השקיה": "נמוכה", "אזור": "כל הארץ", "תיאור": "הצמח הכי עמיד שיש, מנקה את האוויר.", "תמונה": "https://images.unsplash.com/photo-1631553127989-5f6c69551fe0?w=400"},
-    {"צמח": "זית אירופי", "שמש": "שמש מלאה", "השקיה": "נמוכה", "אזור": "צפון", "תיאור": "עץ קלאסי ארץ-ישראלי, דורש מינימום טיפול.", "תמונה": "https://images.unsplash.com/photo-1445296119251-8f328a7e1373?w=400"},
-    {"צמח": "גרניום", "שמש": "חצי צל", "השקיה": "בינונית", "אזור": "כל הארץ", "תיאור": "פריחה צבעונית לאורך רוב השנה.", "תמונה": "https://images.unsplash.com/photo-1524179091875-bf99a9a6af57?w=400"},
-    {"צמח": "לימון", "שמש": "שמש מלאה", "השקיה": "גבוהה", "אזור": "מרכז", "תיאור": "עץ פרי ריחני שמתאים גם לעציצים גדולים.", "תמונה": "https://images.unsplash.com/photo-1585059895316-16056524259b?w=400"},
-    {"צמח": "סוקולנט אלוורה", "שמש": "שמש מלאה", "השקיה": "נמוכה", "אזור": "דרום", "תיאור": "צמח מרפא קל לגידול.", "תמונה": "https://images.unsplash.com/photo-1596547609652-9cf5d8d76921?w=400"},
-    {"צמח": "בוגונוויליה", "שמש": "שמש מלאה", "השקיה": "נמוכה", "אזור": "כל הארץ", "תיאור": "צמח מטפס עם פריחה עוצמתית בקיץ.", "תמונה": "https://images.unsplash.com/photo-1582769923195-c6e60dc1d8bc?w=400"}
+    {
+        "צמח": "מונסטרה דליסיוסה", 
+        "שמש": "צל מלא", "השקיה": "בינונית", "אזור": "כל הארץ",
+        "קושי": "קל", "חיות": "לא ידידותי",
+        "תיאור": "צמח בית טרופי מרהיב. מושלם לפינות ריקות בסלון.",
+        "תמונה": "https://images.unsplash.com/photo-1614594975525-e45190c55d0b?w=400"
+    },
+    {
+        "צמח": "לבנדר רפואי", 
+        "שמש": "שמש מלאה", "השקיה": "נמוכה", "אזור": "צפון",
+        "קושי": "קל", "חיות": "ידידותי",
+        "תיאור": "פרחים סגולים ריחניים. עוזר להרגעת הבית ודחיית יתושים.",
+        "תמונה": "https://images.unsplash.com/photo-1591073113125-e46713c829ed?w=400"
+    }
+    # כאן אפשר להוסיף עוד עשרות צמחים...
 ]
-
 df = pd.DataFrame(data)
 
-# ---------- תפריט צד (UX) ----------
-st.sidebar.image("https://cdn-icons-png.flaticon.com/512/628/628283.png", width=100)
-st.sidebar.title("סינון חכם")
-st.sidebar.write("הגדר את תנאי השטח שלך:")
+# תפריט צד משופר
+with st.sidebar:
+    st.image("https://cdn-icons-png.flaticon.com/512/628/628283.png", width=80)
+    st.title("GreenLayer")
+    
+    st.subheader("🔍 חיפוש והתאמה")
+    region = st.selectbox("אזור מגורים", ["כל הארץ", "צפון", "מרכז", "דרום"])
+    sun = st.selectbox("תנאי אור", ["שמש מלאה", "חצי צל", "צל מלא"])
+    water = st.selectbox("תדירות השקיה", ["נמוכה", "בינונית", "גבוהה"])
+    
+    st.divider()
+    st.subheader("📧 צור קשר לייעוץ")
+    with st.form("contact_form"):
+        email = st.text_input("מייל לחזרה")
+        msg = st.text_area("איזה צמח חסר לך?")
+        submit = st.form_submit_button("שלח בקשה")
+        if submit:
+            st.success("תודה! נחזור אליך בקרוב.")
 
-region = st.sidebar.selectbox("אזור בארץ", ["כל הארץ", "צפון", "מרכז", "דרום"])
-sun = st.sidebar.selectbox("תנאי אור", ["שמש מלאה", "חצי צל", "צל מלא"])
-water = st.sidebar.selectbox("רמת השקיה", ["נמוכה", "בינונית", "גבוהה"])
+# גוף האפליקציה
+st.title("מצא את הירוק שלך 🌿")
 
-st.sidebar.divider()
-st.sidebar.info("טיפ: צמחי 'שמש מלאה' צריכים לפחות 6 שעות אור ישיר ביום.")
-
-# ---------- גוף האפליקציה ----------
-st.title("🌿 GreenLayer")
-st.markdown("### מצא את הצמח המושלם עבורך")
-
-# לוגיקת סינון
-filtered_df = df[
+filtered = df[
     ((df['אזור'] == region) | (df['אזור'] == "כל הארץ")) &
     (df['שמש'] == sun) &
     (df['השקיה'] == water)
 ]
 
-st.write(f"הצגת {len(filtered_df)} תוצאות עבור הבחירה שלך:")
-
-# הצגת התוצאות בעיצוב כרטיסיות (Grid)
-if not filtered_df.empty:
-    for index, row in filtered_df.iterrows():
+if not filtered.empty:
+    for _, row in filtered.iterrows():
         with st.container():
-            col1, col2 = st.columns([1, 3])
+            col1, col2 = st.columns([1, 2])
             with col1:
                 st.image(row['תמונה'], use_container_width=True)
             with col2:
                 st.markdown(f"""
-                <div class="stCard">
+                <div class="plant-card">
                     <h2>{row['צמח']}</h2>
-                    <p><b>תנאים:</b> {row['שמש']} | {row['השקיה']}</p>
-                    <p>{row['תיאור']}</p>
+                    <span class="badge">💪 {row['קושי']} לגידול</span>
+                    <span class="badge">🐾 {row['חיות']}</span>
+                    <p style="margin-top:15px;">{row['תיאור']}</p>
+                    <p><b>תנאים:</b> {row['שמש']} | השקיה {row['השקיה']}</p>
                 </div>
                 """, unsafe_allow_html=True)
+                if st.button(f"קבלת מדריך טיפול ל{row['צמח']}", key=row['צמח']):
+                    st.info(f"המדריך ל{row['צמח']} יישלח למייל שהזנת בתפריט הצד.")
             st.divider()
 else:
-    st.warning("לא מצאנו צמח שתואם בדיוק את כל הפילטרים. נסה להפחית דרישות (למשל לשנות רמת השקיה).")
-
-# הצגת כל הצמחים אם אין תוצאות
-if filtered_df.empty:
+    st.warning("לא מצאנו התאמה מדויקת. אולי תרצה לראות צמחים שדורשים פחות אור?")
     if st.button("הצג את כל הקטלוג"):
-        for index, row in df.iterrows():
-             st.write(f"**{row['צמח']}**")
+        st.dataframe(df[['צמח', 'שמש', 'השקיה']])
