@@ -4,7 +4,7 @@ import pandas as pd
 # הגדרות דף
 st.set_page_config(page_title="GreenLayer Pro", page_icon="🌿", layout="wide")
 
-# עיצוב UI/UX באמצעות CSS
+# עיצוב UI/UX
 st.markdown("""
     <style>
     .main { background-color: #f8f9f8; }
@@ -30,73 +30,86 @@ st.markdown("""
     </style>
     """, unsafe_allow_html=True)
 
-# פונקציה לטעינת נתונים מהגיליון שלך
-@st.cache_data(ttl=60) # מעדכן את הנתונים כל דקה
+# פונקציה לטעינת נתונים
+@st.cache_data(ttl=60)
 def load_data():
     sheet_id = "1nS-ePc8UJFa3zAZLRlpR-PjbnpOqYhFKOK5BQcAH1uw"
     url = f"https://docs.google.com/spreadsheets/d/{sheet_id}/export?format=csv"
     data = pd.read_csv(url)
+    
+    # ניקוי רווחים מיותרים משמות העמודות ומהנתונים עצמם (המנגנון הסלחני)
+    data.columns = data.columns.str.strip()
+    for col in data.select_dtypes(include=['object']).columns:
+        data[col] = data[col].str.strip()
+        
     return data
 
-# טעינת הנתונים
 try:
     df = load_data()
 except Exception as e:
-    st.error("שגיאה בחיבור לנתונים. וודא שהגיליון מוגדר כציבורי ושכותרות העמודות נכונות.")
+    st.error("שגיאה בחיבור לנתונים. וודא שהגיליון מוגדר כציבורי.")
     st.stop()
 
-# --- תפריט צד (Sidebar) ---
+# --- תפריט צד ---
 with st.sidebar:
     st.image("https://cdn-icons-png.flaticon.com/512/628/628283.png", width=80)
     st.title("GreenLayer")
-    st.subheader("סינון חכם")
     
+    st.subheader("סינון חכם")
     region = st.selectbox("אזור מגורים", ["כל הארץ", "צפון", "מרכז", "דרום"])
     sun = st.selectbox("תנאי אור", ["שמש מלאה", "חצי צל", "צל מלא"])
     water = st.selectbox("רמת השקיה", ["נמוכה", "בינונית", "גבוהה"])
     
-    st.divider()
-    st.write("### צור קשר לייעוץ")
-    with st.form("contact"):
-        email = st.text_input("אימייל")
-        msg = st.text_area("הודעה")
-        if st.form_submit_button("שלח"):
-            st.success("הבקשה נשלחה!")
+    if st.button("איפוס סינונים 🔄"):
+        st.rerun()
 
 # --- גוף האפליקציה ---
 st.title("🌿 GreenLayer")
-st.markdown("#### המדריך האישי שלך להתאמת צמחייה בישראל")
 
-# לוגיקת סינון
-mask = ((df['אזור'] == region) | (df['אזור'] == "כל הארץ")) & \
-       (df['שמש'] == sun) & \
-       (df['השקיה'] == water)
+# שורת חיפוש חופשי
+search_query = st.text_input("חפש צמח לפי שם...", "")
 
-filtered_df = df[mask]
+# לוגיקת סינון משולבת (סינון + חיפוש)
+mask = (
+    ((df['אזור'] == region) | (df['אזור'] == "כל הארץ")) &
+    (df['שמש'] == sun) &
+    (df['השקיה'] == water)
+)
 
-st.write(f"מצאנו **{len(filtered_df)}** צמחים שמתאימים בדיוק עבורך:")
+# אם המשתמש כתב משהו בשורת החיפוש, נתעלם מהסינונים האחרים ונציג את הצמח הספציפי
+if search_query:
+    filtered_df = df[df['צמח'].str.contains(search_query, case=False, na=False)]
+else:
+    filtered_df = df[mask]
+
+# הצגת תוצאות
+st.markdown(f"מצאנו **{len(filtered_df)}** צמחים עבורך:")
 
 if not filtered_df.empty:
     for index, row in filtered_df.iterrows():
         with st.container():
             col1, col2 = st.columns([1, 2.5])
             with col1:
-                # הצגת תמונה עם פינות מעוגלות
-                st.image(row['תמונה'], use_container_width=True)
+                # טיפול במקרה של תמונה חסרה
+                img_url = row['תמונה'] if pd.notnull(row['תמונה']) else "https://via.placeholder.com/150"
+                st.image(img_url, width=250)
             with col2:
                 st.markdown(f"""
                 <div class="plant-card">
                     <h2>{row['צמח']}</h2>
                     <div>
-                        <span class="badge">💪 {row['קושי']} לגידול</span>
+                        <span class="badge">💪 {row['קושי']}</span>
                         <span class="badge">🐾 {row['חיות']}</span>
+                        <span class="badge">📍 {row['אזור']}</span>
                     </div>
                     <p style="margin-top:15px; font-size: 16px;">{row['תיאור']}</p>
                     <p><b>תנאי גידול:</b> {row['שמש']} | השקיה {row['השקיה']}</p>
                 </div>
                 """, unsafe_allow_html=True)
-                if st.button(f"קבלת מדריך טיפול ל{row['צמח']}", key=f"btn_{index}"):
-                    st.toast(f"המדריך ל{row['צמח']} בדרך אליך!", icon="🌱")
             st.divider()
 else:
-    st.info("לא נמצאו צמחים תואמים בדיוק. נסה לשנות את אחד הפילטרים.")
+    st.info("לא נמצאו צמחים תואמים. נסה לשנות את הסינון או לבדוק את איות שם הצמח.")
+
+# להצגת הטבלה הגולמית לניפוי שגיאות (תוכל למחוק את זה אחר כך)
+with st.expander("צפייה בנתוני הגיליון הגולמיים"):
+    st.write(df)
